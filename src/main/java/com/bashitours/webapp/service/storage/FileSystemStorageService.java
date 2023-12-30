@@ -20,6 +20,7 @@ import java.util.stream.Stream;
 public class FileSystemStorageService implements StorageService{
 
     private final Path  rootLocation ;
+    private final Path  visitedCountriesDir;
 
     @Autowired
     public FileSystemStorageService(StorageProperties properties){
@@ -28,6 +29,7 @@ public class FileSystemStorageService implements StorageService{
         }
         else {
             this.rootLocation = Paths.get(properties.getLocation());
+            this.visitedCountriesDir = Paths.get(properties.getVisitedCountriesDirLocation());
         }
     }
 
@@ -56,11 +58,10 @@ public class FileSystemStorageService implements StorageService{
     }
 
     @Override
-    public Stream<Path> loadAll() {
+    public Stream<Path> loadAll(Path dir) {
         try {
-            return Files.walk(this.rootLocation, 1)
-                    .filter(path -> !path.equals(this.rootLocation))
-                    .map(this.rootLocation::relativize);
+            return Files.walk(dir, 2)
+                    .filter(path -> !path.equals(dir));
         }
         catch (IOException e) {
             throw new StorageException("Failed to read stored files", e);
@@ -70,7 +71,10 @@ public class FileSystemStorageService implements StorageService{
 
     @Override
     public Path load(String filename) {
-        return rootLocation.resolve(filename);
+        System.out.println(filename);
+        Path p = rootLocation.resolve(filename);
+        System.out.println(p);
+        return p;
     }
 
     @Override
@@ -100,10 +104,19 @@ public class FileSystemStorageService implements StorageService{
     @Override
     public void init() {
         try {
-            Files.createDirectories(rootLocation);
+            Files.createDirectories(visitedCountriesDir);
+
         }
         catch (IOException e) {
             throw new StorageException("Could not initialize storage", e);
         }
+    }
+
+    public String getRoot(){
+        return rootLocation.toString();
+    }
+
+    public String getVisitedCountriesDir(){
+        return visitedCountriesDir.toString();
     }
 }
